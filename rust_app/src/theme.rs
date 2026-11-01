@@ -67,7 +67,7 @@ pub fn setup(ctx: &egui::Context) {
 
 pub fn card(ui: &mut egui::Ui, content: impl FnOnce(&mut egui::Ui)) {
     let p = palette(ui.visuals().dark_mode);
-    egui::Frame::new().fill(p.surface).stroke(Stroke::new(1.0, p.line))
+    egui::Frame::new().fill(if ui.visuals().dark_mode { Color32::from_rgba_unmultiplied(33, 36, 43, 242) } else { Color32::from_rgba_unmultiplied(255, 255, 255, 239) }).stroke(Stroke::new(1.0, p.line))
         .corner_radius(10).inner_margin(20).show(ui, |ui| {
             ui.set_width(ui.available_width());
             content(ui);

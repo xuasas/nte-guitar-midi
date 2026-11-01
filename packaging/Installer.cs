@@ -14,19 +14,21 @@ internal static class Installer {
         Application.SetCompatibleTextRenderingDefault(false);
         string defaultParent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs");
         string destination = Path.Combine(defaultParent, "NTE Guitar MIDI");
-        using (var form = new Form { Text="明音凛的旋律工坊 安装程序", ClientSize=new Size(590,230), StartPosition=FormStartPosition.CenterScreen, FormBorderStyle=FormBorderStyle.FixedDialog, MaximizeBox=false }) {
+        foreach (char c in destination) if (c > 127) { destination = Path.Combine(Path.GetPathRoot(Environment.SystemDirectory), "NTE Guitar MIDI"); break; }
+        using (var form = new Form { Text="明音凛的旋律工坊 安装程序", ClientSize=new Size(590,260), StartPosition=FormStartPosition.CenterScreen, FormBorderStyle=FormBorderStyle.FixedDialog, MaximizeBox=false }) {
             var heading = new Label { Text="安装 明音凛的旋律工坊", Font=new Font("Microsoft YaHei UI",14,FontStyle.Bold), AutoSize=true, Location=new Point(24,18) };
-            var info = new Label { Text="选择新的安装目录。AI 扒谱模型将在首次使用时联网下载。", AutoSize=true, Location=new Point(27,59) };
-            var pathBox = new TextBox { Text=destination, Location=new Point(27,94), Size=new Size(420,30) };
-            var browse = new Button { Text="浏览…", Location=new Point(455,92), Size=new Size(105,29) };
-            var install = new Button { Text="安装", Location=new Point(350,165), Size=new Size(100,34) };
-            var cancel = new Button { Text="取消", Location=new Point(460,165), Size=new Size(100,34), DialogResult=DialogResult.Cancel };
+            var info = new Label { Text="安装路径必须为英文（可含数字和空格），且目录为空。\nAI 扒谱模型将在首次使用时联网下载。", AutoSize=true, Location=new Point(27,59) };
+            var pathBox = new TextBox { Text=destination, Location=new Point(27,115), Size=new Size(420,30) };
+            var browse = new Button { Text="浏览…", Location=new Point(455,113), Size=new Size(105,29) };
+            var install = new Button { Text="安装", Location=new Point(350,195), Size=new Size(100,34) };
+            var cancel = new Button { Text="取消", Location=new Point(460,195), Size=new Size(100,34), DialogResult=DialogResult.Cancel };
             browse.Click += delegate { using (var dialog = new FolderBrowserDialog { Description="选择安装位置的上一级目录" }) if (dialog.ShowDialog(form)==DialogResult.OK) pathBox.Text=Path.Combine(dialog.SelectedPath,"NTE Guitar MIDI"); };
             cancel.Click += delegate { form.Close(); };
             install.Click += delegate {
                 try {
                     string root=Path.GetFullPath(pathBox.Text.Trim());
                     if (String.IsNullOrWhiteSpace(pathBox.Text) || !Path.IsPathRooted(pathBox.Text) || root == Path.GetPathRoot(root)) throw new InvalidOperationException("请选择有效的安装目录。");
+                    foreach (char c in root) if (c > 127) throw new InvalidOperationException("安装路径只能使用英文字符、数字和符号，请选择英文路径。");
                     if (Directory.Exists(root) && Directory.GetFileSystemEntries(root).Length != 0) throw new InvalidOperationException("安装目录不为空，请选择一个新目录，避免覆盖已有文件。");
                     Directory.CreateDirectory(root);
                     using (Stream payload=Assembly.GetExecutingAssembly().GetManifestResourceStream("payload.zip"))

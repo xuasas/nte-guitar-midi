@@ -19,6 +19,7 @@ pub struct Workbench {
     smoke_started: Option<std::time::Instant>,
     environment: Environment,
     last_output: Option<PathBuf>,
+    artwork: egui::TextureHandle, icon: egui::TextureHandle,
 }
 enum Work { Library(Result<Vec<PathBuf>, String>), Imported(Result<PathBuf, String>),
     Audio(Option<PathBuf>), Compiled(u64, Result<(Song, Timeline), String>), Deleted(PathBuf, Result<(), String>) }
@@ -40,10 +41,17 @@ impl Workbench {
             Some("light") => ThemePreference::Light, Some("dark") => ThemePreference::Dark, _ => ThemePreference::System,
         };
         cc.egui_ctx.set_theme(theme);
+        let load_image = |name: &str, bytes: &[u8]| {
+            let image = image::load_from_memory(bytes).expect("valid embedded image").to_rgba8();
+            let size = [image.width() as usize, image.height() as usize];
+            cc.egui_ctx.load_texture(name, egui::ColorImage::from_rgba_unmultiplied(size, image.as_raw()), egui::TextureOptions::LINEAR)
+        };
+        let artwork = load_image("background", include_bytes!("../assets/background.png"));
+        let icon = load_image("icon", include_bytes!("../assets/icon.png"));
         let (tx, rx) = mpsc::channel();
         let root = library::installation_root();
         let environment = Environment::inspect(&root);
-        let s = Self { root, environment, page: Page::Transcribe, theme,
+        let s = Self { artwork, icon, root, environment, page: Page::Transcribe, theme,
             audio: None, vocal: true, instrument: true, name: String::new(), task: None,
             stage: "选择音频后开始扒谱".into(), progress: None, logs: Vec::new(), started: None,
             files: Vec::new(), search: String::new(), selected: None, song: None, track: None,
@@ -171,9 +179,7 @@ impl eframe::App for Workbench {
             ui.add_space(8.0);
             ui.horizontal(|ui| {
                 let p = theme::palette(ui.visuals().dark_mode);
-                let (rect, _) = ui.allocate_exact_size(egui::vec2(30.0, 30.0), egui::Sense::hover());
-                for i in 0..3 { let y = rect.top() + 8.0 + i as f32 * 7.0; ui.painter().line_segment([egui::pos2(rect.left()+3.0,y), egui::pos2(rect.right()-3.0,y)], egui::Stroke::new(1.5,p.accent)); }
-                ui.painter().circle_filled(egui::pos2(rect.left()+12.0,rect.top()+15.0), 3.0,p.accent);
+                ui.add(egui::Image::new((self.icon.id(), egui::vec2(38.0, 38.0))).corner_radius(8));
                 ui.vertical(|ui| { ui.label(RichText::new("明音凛的").strong().size(16.0)); ui.label(RichText::new("旋律工坊").size(14.0).color(p.muted)); });
             });
             ui.add_space(30.0);
@@ -189,8 +195,15 @@ impl eframe::App for Workbench {
             });
         });
         egui::CentralPanel::default().frame(egui::Frame::new().fill(background).inner_margin(egui::Margin::symmetric(26, 24))).show(ui, |ui| {
+            let rect = ui.max_rect();
+            let image_aspect = self.artwork.size()[0] as f32 / self.artwork.size()[1] as f32;
+            let view_aspect = rect.width() / rect.height().max(1.0);
+            let uv = if view_aspect < image_aspect { let width = view_aspect / image_aspect; egui::Rect::from_min_max(egui::pos2(1.0 - width, 0.0), egui::pos2(1.0, 1.0)) } else { let height = image_aspect / view_aspect; egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, height)) };
+            ui.painter().image(self.artwork.id(), rect, uv, egui::Color32::WHITE);
+            let overlay = if ui.visuals().dark_mode { egui::Color32::from_black_alpha(195) } else { egui::Color32::from_white_alpha(80) };
+            ui.painter().rect_filled(rect, 0.0, overlay);
             egui::ScrollArea::vertical().id_salt("page_scroll").show(ui, |ui| match self.page {
-                Page::Transcribe => self.transcribe_ui(ui, &ctx),
+                Page::Transcribe => { let width = ui.available_width(); if width > 550.0 { ui.set_max_width((width * 0.72).max(430.0)); } self.transcribe_ui(ui, &ctx); },
                 Page::Play => self.play_ui(ui, &ctx),
                 Page::Settings => self.settings_ui(ui, &ctx),
                 Page::About => self.about_ui(ui),
@@ -341,7 +354,7 @@ impl Workbench {
             if old != self.track || changed { self.compile(ctx); }
             ui.add_space(8.0);
             let p = theme::palette(ui.visuals().dark_mode);
-            egui::Frame::new().fill(p.soft).corner_radius(7).inner_margin(12).show(ui, |ui| { ui.set_width(ui.available_width()); ui.label("切换到游戏三排音符界面后按 F8 开始。"); ui.label(RichText::new(&self.message).small()); });
+            egui::Frame::new().fill(p.soft).corner_radius(7).inner_margin(12).show(ui, |ui| { ui.set_width(ui.available_width()); ui.label("切换到游戏三排音符界面后按 F8 开始。"); ui.label("若游戏以管理员身份运行，请右键软件并选择以管理员身份运行。权限不一致可能导致无法演奏。"); ui.label(RichText::new(&self.message).small()); });
             ui.add_space(8.0);
             ui.horizontal_wrapped(|ui| { if ui.add(theme::primary("开始 / 暂停（F8）", ui.visuals().dark_mode)).clicked() { self.start_play(); } if ui.button("停止（F12）").clicked() { if let Some(p) = &self.player { p.stop(); } } });
             ui.scope(|ui| {
