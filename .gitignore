@@ -1,0 +1,33 @@
+# Local AI environments and downloaded models
+/.venv/
+/runtime/
+/vendor/sheetsage2/.venv/
+/vendor/sheetsage2/models/
+/vendor/sheetsage2/.hf_cache/
+/vendor/sheetsage2/.numba_cache/
+/rust_app/.model_home/
+
+# Build artifacts and Python caches
+/rust_app/target/
+**/__pycache__/
+*.py[cod]
+*.pdb
+
+# User music, output, recordings, logs and machine-specific configuration
+/songs/
+/out/*
+!/out/黄昏之时-你的名字.mid
+/logs/
+/player/
+/config.local.json
+/gui_settings.json
+*.zip
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.ogg
+
+# The verified Windows launcher in the repository is intentionally included.
+*.exe
+!/明音凛的旋律工坊.exe

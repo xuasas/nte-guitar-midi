@@ -1,0 +1,22 @@
+[workspace]
+members = [".", "crates/player", "crates/inference", "crates/recorder"]
+resolver = "2"
+
+[package]
+name = "mingyin-workbench"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+eframe = { version = "0.36", features = ["persistence"] }
+rfd = "0.17"
+trash = "5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+melody_player = { path = "crates/player" }
+melody_inference = { path = "crates/inference" }
+melody_recorder = { path = "crates/recorder" }
+
+[profile.dev.package."*"]
+opt-level = 2

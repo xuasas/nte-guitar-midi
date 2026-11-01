@@ -1,0 +1,18 @@
+Project and Third-Party Notices
+
+Original project code is provided under the MIT License in LICENSE. The files
+under vendor/sheetsage2/patched_model_py include adaptations of SheetSage2
+model code; retain the upstream notices and review the original authors' terms
+before redistributing those components. A local license file in licenses/ has
+an upstream title referring to MERT; it should not be treated as independent
+proof of the SheetSage2 code license.
+
+SheetSage2 and MERT-v2-FullSong model weights are not included in this source
+repository. The upstream model cards identify them as CC BY-NC 4.0. The models
+are downloaded separately on first use and are subject to the original terms:
+https://huggingface.co/m-a-p/SheetSage2
+https://huggingface.co/m-a-p/MERT-v2-FullSong
+
+Third-party dependencies, fonts, audio codecs and other assets remain under
+their respective licenses. See the notices in licenses/ and the upstream
+components for details. The four-note sample MIDI was created for this project.
